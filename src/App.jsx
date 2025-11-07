@@ -1,0 +1,34 @@
+import { Routes, Route } from 'react-router-dom'
+import LandingPage from './components/LandingPage'
+import RegisterForm from './components/auth/RegisterForm'
+import LoginForm from './components/auth/LoginForm'
+import Dashboard from './components/dashboard/Dashboard'
+
+import { useEffect } from 'react';
+import { auth } from './firebase/config';
+import { onAuthStateChanged } from 'firebase/auth';
+
+function App() {
+  useEffect(() => {
+    console.log('🔄 App component mounted - testing Firebase...');
+    // Test Firebase
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log('🔥 Firebase connecté !');
+      console.log('Utilisateur:', user);
+    });
+    
+    return () => unsubscribe();
+  }, []);
+  
+  return (
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/LoginForm" element={<LoginForm />} />
+      <Route path="/RegisterForm" element={<RegisterForm />} />
+      <Route path="/Dashboard" element={<Dashboard />} />
+
+    </Routes>
+  )
+}
+
+export default App
