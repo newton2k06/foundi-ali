@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../firebase/config";
+import { doc, setDoc } from "firebase/firestore";
+import { auth, db } from "../../firebase/config";
 
 function RegisterForm() {
   const navigate = useNavigate();
@@ -12,7 +13,7 @@ function RegisterForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [serie, setSerie] = useState(""); // ✅ nouveau
+  const [serie, setSerie] = useState(""); // Série de l'élève
   const [error, setError] = useState("");
 
   const handleSubmit = async (event) => {
@@ -25,11 +26,31 @@ function RegisterForm() {
     }
 
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      // 1️⃣ Création du compte Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-      // ✅ Plus tard : enregistrement des infos dans Firestore
+      // 2️⃣ Enregistrement dans Firestore avec status pending
+      await setDoc(doc(db, "users", user.uid), {
+        prenom,
+        nom,
+        email,
+        serie,
+        role: "eleve",       // rôle par défaut
+        status: "pending",   // compte en attente de validation
+        createdAt: new Date()
+      });
 
-      navigate("/dashboard");
+      // 3️⃣ Message à l'élève
+      alert("Inscription envoyée ! Votre compte est en attente de validation par l'administrateur.");
+
+      // ❹ Réinitialiser le formulaire (optionnel)
+      setPrenom("");
+      setNom("");
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+      setSerie("");
 
     } catch (err) {
       console.error(err);

@@ -1,14 +1,14 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../firebase/config";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { auth, db } from "../../firebase/config";
+import { doc, getDoc } from "firebase/firestore";
 
 function LoginForm() {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [error, setError] = useState("");
 
   const handleSubmit = async (event) => {
@@ -16,16 +16,39 @@ function LoginForm() {
     setError("");
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      // 1️⃣ Connexion Firebase Auth
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-      navigate("/dashboard"); // redirection après connexion
+      // 2️⃣ Vérification du statut Firestore
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+
+        if (userData.status === "active" ) {
+          // ✅ Compte validé
+          if(userData.role==="superuser"){
+            navigate("/admin")
+          }else{
+            navigate("/dashboard");
+
+          }
+          
+        } else {
+          // ❌ Compte en attente
+          setError("Votre compte est en attente de validation par l'administrateur.");
+          await signOut(auth); // Déconnexion immédiate
+        }
+      } else {
+        setError("Profil utilisateur introuvable. Contactez l'administrateur.");
+        await signOut(auth);
+      }
+
     } catch (err) {
       console.error(err);
 
-      if (err.code === "auth/invalid-credential") {
+      if (err.code === "auth/invalid-email" || err.code === "auth/user-not-found") {
         setError("E-mail ou mot de passe incorrect.");
-      } else if (err.code === "auth/user-not-found") {
-        setError("Aucun compte ne correspond à cet e-mail.");
       } else if (err.code === "auth/wrong-password") {
         setError("Mot de passe incorrect.");
       } else {
@@ -50,12 +73,9 @@ function LoginForm() {
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Email */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700">
-            E-mail
-          </label>
+          <label className="block text-sm font-semibold text-gray-700">E-mail</label>
           <input
             type="email"
-            id="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500"
@@ -65,12 +85,9 @@ function LoginForm() {
 
         {/* Mot de passe */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700">
-            Mot de passe
-          </label>
+          <label className="block text-sm font-semibold text-gray-700">Mot de passe</label>
           <input
             type="password"
-            id="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500"
@@ -86,14 +103,12 @@ function LoginForm() {
           Se connecter
         </button>
 
-        {/* Lien */}
+        {/* Liens supplémentaires */}
         <p className="text-center text-gray-600 text-sm mt-4">
           Mot de passe oublié ?{" "}
-          <button className="text-blue-600 hover:underline">
-            Réinitialiser
-          </button>
+          <button className="text-blue-600 hover:underline">Réinitialiser</button>
         </p>
-        <p className="text-center text-gray-600 text-sm mt-4">
+        <p className="text-center text-gray-600 text-sm mt-2">
           Pas de compte ?{" "}
           <button
             onClick={() => navigate("/RegisterForm")}

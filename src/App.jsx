@@ -3,6 +3,7 @@ import LandingPage from './components/LandingPage'
 import RegisterForm from './components/auth/RegisterForm'
 import LoginForm from './components/auth/LoginForm'
 import Dashboard from './components/dashboard/Dashboard'
+import DashboardSuperUser from './components/dashboard/DashboardSuperUser'
 
 import { useEffect } from 'react';
 import { auth } from './firebase/config';
@@ -26,6 +27,9 @@ function App() {
       <Route path="/LoginForm" element={<LoginForm />} />
       <Route path="/RegisterForm" element={<RegisterForm />} />
       <Route path="/Dashboard" element={<Dashboard />} />
+      <Route path="/admin" element={<DashboardSuperUser />} />
+      
+
 
     </Routes>
   )
