@@ -146,7 +146,7 @@ function Dashboard() {
                 icon="📅"
                 color="purple"
                 onClick={() => setActivePage("PlanningPage")}
-                comingSoon
+                
               />
               
               <FeatureCard

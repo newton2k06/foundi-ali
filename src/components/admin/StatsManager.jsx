@@ -3,13 +3,13 @@ import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
 import { db } from "../../firebase/config";
 import dayjs from "dayjs";
 
-const MONTHLY_FEE = 5000; // francs comoriens
+const MONTHLY_FEE = 5000;
 
 export default function StatsManager() {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const currentMonth = dayjs().format("YYYY-MM"); // ex: "2025-11"
+  const currentMonth = dayjs().format("YYYY-MM");
 
   const fetchStudents = async () => {
     setLoading(true);
@@ -34,75 +34,94 @@ export default function StatsManager() {
     fetchStudents();
   };
 
-  if (loading) return <p className="text-center mt-10">Chargement...</p>;
+  if (loading) {
+    return (
+      <div className="bg-white p-6 rounded-xl shadow-sm">
+        <p className="text-center text-gray-600">Chargement...</p>
+      </div>
+    );
+  }
 
-  // Calcul des montants
+  // Calculs
   const totalDue = students.length * MONTHLY_FEE;
   let totalReceived = 0;
-  let totalArrears = 0;
-
-  students.forEach((s) => {
-    const payments = s.payments || {};
-    totalReceived += Object.values(payments).filter(Boolean).length * MONTHLY_FEE;
+  
+  students.forEach(student => {
+    const payments = student.payments || {};
+    if (payments[currentMonth]) {
+      totalReceived += MONTHLY_FEE;
+    }
   });
 
-  totalArrears = totalDue - totalReceived;
+  const totalArrears = totalDue - totalReceived;
 
   return (
-    <div className="p-4">
-      <h2 className="text-xl font-semibold mb-4">Gestion des Paiements</h2>
+    <div className="space-y-6">
+      <div className="bg-white p-6 rounded-xl shadow-sm">
+        <h1 className="text-2xl font-semibold text-gray-800 mb-6">💰 Gestion des Paiements</h1>
 
-      <div className="mb-4">
-        <p>Total à percevoir ce mois : {totalDue} FC</p>
-        <p>Total perçu : {totalReceived} FC</p>
-        <p>Total restant (arriérés) : {totalArrears} FC</p>
-      </div>
+        {/* Résumé */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <p className="text-blue-800 font-medium">Total à percevoir</p>
+            <p className="text-2xl font-bold text-blue-600">{totalDue} FC</p>
+          </div>
+          
+          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+            <p className="text-green-800 font-medium">Déjà perçu</p>
+            <p className="text-2xl font-bold text-green-600">{totalReceived} FC</p>
+          </div>
+          
+          <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+            <p className="text-orange-800 font-medium">Reste à percevoir</p>
+            <p className="text-2xl font-bold text-orange-600">{totalArrears} FC</p>
+          </div>
+        </div>
 
-      {students.length === 0 ? (
-        <p>Aucun étudiant trouvé.</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-center min-w-[700px]">
-            <thead>
-              <tr className="bg-gray-200">
-                <th className="border px-4 py-2">Nom</th>
-                <th className="border px-4 py-2">Email</th>
-                <th className="border px-4 py-2">Série</th>
-                <th className="border px-4 py-2">Paiement {currentMonth}</th>
-                <th className="border px-4 py-2">Arriérés</th>
-              </tr>
-            </thead>
-            <tbody>
+        {/* Liste étudiants */}
+        <div>
+          <h2 className="text-lg font-semibold mb-4">
+            Étudiants - {dayjs(currentMonth).format('MMMM YYYY')}
+          </h2>
+          
+          {students.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">Aucun étudiant</p>
+          ) : (
+            <div className="space-y-3">
               {students.map((student) => {
                 const payments = student.payments || {};
-                const hasPaidCurrent = payments[currentMonth] || false;
-
-                const arrears = Object.keys(payments)
-                  .filter((m) => !payments[m])
-                  .sort((a, b) => a.localeCompare(b));
+                const hasPaid = payments[currentMonth] || false;
 
                 return (
-                  <tr key={student.id}>
-                    <td className="border px-4 py-2">{student.prenom} {student.nom}</td>
-                    <td className="border px-4 py-2">{student.email}</td>
-                    <td className="border px-4 py-2">{student.serie}</td>
-                    <td className="border px-4 py-2">
-                      <input
-                        type="checkbox"
-                        checked={hasPaidCurrent}
-                        onChange={() => togglePayment(student.id)}
-                      />
-                    </td>
-                    <td className="border px-4 py-2">
-                      {arrears.length > 0 ? arrears.join(", ") : "Aucun"}
-                    </td>
-                  </tr>
+                  <div key={student.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                    <div>
+                      <p className="font-semibold">{student.prenom} {student.nom}</p>
+                      <p className="text-sm text-gray-600">{student.serie} • {student.email}</p>
+                    </div>
+                    
+                    <button
+                      onClick={() => togglePayment(student.id)}
+                      className={`px-4 py-2 rounded-lg font-medium ${
+                        hasPaid 
+                          ? 'bg-green-500 hover:bg-green-600 text-white' 
+                          : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                      }`}
+                    >
+                      {hasPaid ? '✅ Payé' : '❌ En attente'}
+                    </button>
+                  </div>
                 );
               })}
-            </tbody>
-          </table>
+            </div>
+          )}
         </div>
-      )}
+      </div>
+
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <p className="text-blue-800 text-sm">
+          💡 Cliquez pour marquer un étudiant comme "Payé" après réception du paiement.
+        </p>
+      </div>
     </div>
   );
 }
