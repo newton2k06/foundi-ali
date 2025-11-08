@@ -109,7 +109,15 @@ function Dashboard() {
           </div>
         );
       case "planning":
-        return <PlanningPage />; // ← Ajout du planning
+        return (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-xl shadow-sm">
+              <h1 className="text-2xl font-semibold text-gray-800 mb-2">Mon Planning</h1>
+              <p className="text-gray-600 mb-6">Consultez votre planning</p>
+              <PlanningPage />
+            </div>
+          </div>
+        );
     
       
       case "dashboard":
@@ -139,15 +147,14 @@ function Dashboard() {
                 color="green"
                 onClick={() => setActivePage("profile")}
               />
-              
               <FeatureCard
                 title="Planning"
                 description="Votre emploi du temps"
                 icon="📅"
                 color="purple"
-                onClick={() => setActivePage("PlanningPage")}
-                
+                onClick={() => setActivePage("planning")}  // ← "planning" au lieu de "PlanningPage"
               />
+             
               
               <FeatureCard
                 title="Mes Notes"
