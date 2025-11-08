@@ -5,7 +5,7 @@ import LoginForm from './components/auth/LoginForm'
 import Dashboard from './components/dashboard/Dashboard'
 import DashboardSuperUser from './components/dashboard/DashboardSuperUser'
 import NotesPage from './components/eleve/NotesPage'
-import PresencesPage from './components/eleve/PresencesPage'
+import PaiementPage from './components/eleve/PaiementPage'
 import PlanningPage from './components/eleve/PlanningPage'
 import CoursePage from './components/eleve/CoursePage'
 
@@ -38,8 +38,8 @@ function App() {
       <Route path="/cours" element={<CoursePage />} />
       <Route path="/notes" element={<NotesPage />} />
       <Route path="/planning" element={<PlanningPage />} />
-      <Route path="/presences" element={<PresencesPage />} />
-
+      <Route path="/Paiement" element={<PaiementPage />} />
+      
 
     </Routes>
   )

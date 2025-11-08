@@ -1,38 +1,50 @@
-import { useState } from "react";
+// DashboardSuperUser.jsx
+import { useEffect, useState } from "react";
 import { signOut } from "firebase/auth";
 import { auth } from "../../firebase/config";
 import { useNavigate } from "react-router-dom";
-import PlanningManager from "../admin/PlanningManager";
 
+import UserManager from "../admin/UserManager";
 import CourseManager from "../admin/CourseManager";
-import UserManager from "../admin/UserManager"; // Ton module étudiants
-// import PlanningManager from "../admin/PlanningManager"; // quand tu seras prêt
+import PlanningManager from "../admin/PlanningManager";
+import StatsManager from "../admin/StatsManager";
 
 export default function DashboardSuperUser() {
   const navigate = useNavigate();
-  const [activePage, setActivePage] = useState("students"); // page par défaut
+  const [activePage, setActivePage] = useState("students");
+  const [userLoaded, setUserLoaded] = useState(false);
+
+  useEffect(() => {
+    // Vérification superuser
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (!user) {
+        navigate("/LoginForm");
+      } else {
+        setUserLoaded(true);
+      }
+    });
+    return () => unsubscribe();
+  }, [navigate]);
 
   const handleLogout = async () => {
     await signOut(auth);
     navigate("/LoginForm");
   };
 
+  if (!userLoaded) return <p className="text-center mt-10">Chargement utilisateur...</p>;
+
   return (
     <div className="flex min-h-screen bg-gray-100">
 
-      {/* 🟦 SIDEBAR */}
+      {/* SIDEBAR */}
       <aside className="w-64 bg-white shadow-lg p-4 hidden md:block">
-        <h1 className="text-2xl font-bold mb-8 text-blue-700">
-          Admin Panel
-        </h1>
+        <h1 className="text-2xl font-bold mb-8 text-blue-700">Admin Panel</h1>
 
         <nav className="space-y-2">
           <button
             onClick={() => setActivePage("students")}
             className={`w-full text-left p-3 rounded-lg font-semibold ${
-              activePage === "students"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              activePage === "students" ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
             }`}
           >
             👨‍🎓 Gestion des étudiants
@@ -41,9 +53,7 @@ export default function DashboardSuperUser() {
           <button
             onClick={() => setActivePage("courses")}
             className={`w-full text-left p-3 rounded-lg font-semibold ${
-              activePage === "courses"
-                ? "bg-purple-600 text-white"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              activePage === "courses" ? "bg-purple-600 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
             }`}
           >
             📚 Gestion des cours
@@ -52,9 +62,7 @@ export default function DashboardSuperUser() {
           <button
             onClick={() => setActivePage("planning")}
             className={`w-full text-left p-3 rounded-lg font-semibold ${
-              activePage === "planning"
-                ? "bg-green-600 text-white"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              activePage === "planning" ? "bg-green-600 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
             }`}
           >
             📅 Planning
@@ -63,16 +71,13 @@ export default function DashboardSuperUser() {
           <button
             onClick={() => setActivePage("stats")}
             className={`w-full text-left p-3 rounded-lg font-semibold ${
-              activePage === "stats"
-                ? "bg-yellow-600 text-white"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              activePage === "stats" ? "bg-yellow-600 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
             }`}
           >
             📊 Statistiques
           </button>
         </nav>
 
-        {/* LOGOUT */}
         <button
           onClick={handleLogout}
           className="mt-10 w-full bg-red-500 text-white p-3 rounded-lg font-bold hover:bg-red-600"
@@ -81,7 +86,7 @@ export default function DashboardSuperUser() {
         </button>
       </aside>
 
-      {/* ✅ MOBILE NAV */}
+      {/* MOBILE NAV */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t p-2 flex justify-around text-xl">
         <button onClick={() => setActivePage("students")}>👨‍🎓</button>
         <button onClick={() => setActivePage("courses")}>📚</button>
@@ -89,17 +94,12 @@ export default function DashboardSuperUser() {
         <button onClick={() => setActivePage("stats")}>📊</button>
       </div>
 
-      {/* 🟩 CONTENU */}
+      {/* CONTENT */}
       <main className="flex-1 p-4 md:p-8">
         {activePage === "students" && <UserManager />}
         {activePage === "courses" && <CourseManager />}
-        {activePage === "planning" && <PlanningManager/>}
-        {activePage === "stats" && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Statistiques</h2>
-            <p className="text-gray-600">Module statistiques à venir…</p>
-          </div>
-        )}
+        {activePage === "planning" && <PlanningManager />}
+        {activePage === "stats" && <StatsManager />}
       </main>
     </div>
   );

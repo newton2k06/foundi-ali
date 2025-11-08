@@ -9,10 +9,12 @@ export default function UserManager() {
   const fetchStudents = async () => {
     setLoading(true);
     const querySnapshot = await getDocs(collection(db, "users"));
-    const usersList = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    let usersList = querySnapshot.docs
+      .map((doc) => ({ id: doc.id, ...doc.data() }))
+      // 1️⃣ Exclure les super users
+      .filter((user) => user.role !== "superuser")
+      // 2️⃣ Trier par ordre alphabétique
+      .sort((a, b) => a.nom.localeCompare(b.nom));
     setStudents(usersList);
     setLoading(false);
   };
@@ -33,6 +35,18 @@ export default function UserManager() {
     }
   };
 
+  const updateGroup = async (id, group) => {
+    await updateDoc(doc(db, "users", id), { group });
+    fetchStudents();
+  };
+
+  const togglePayment = async (id) => {
+    const student = students.find((s) => s.id === id);
+    const hasPaid = student?.hasPaidThisMonth || false;
+    await updateDoc(doc(db, "users", id), { hasPaidThisMonth: !hasPaid });
+    fetchStudents();
+  };
+
   if (loading) return <p className="text-center mt-10">Chargement...</p>;
 
   return (
@@ -43,13 +57,15 @@ export default function UserManager() {
         <p>Aucun étudiant trouvé.</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-center min-w-[600px]">
+          <table className="w-full border-collapse text-center min-w-[700px]">
             <thead>
               <tr className="bg-gray-200">
                 <th className="border px-4 py-2">Nom</th>
                 <th className="border px-4 py-2">Email</th>
                 <th className="border px-4 py-2">Série</th>
                 <th className="border px-4 py-2">Statut</th>
+                <th className="border px-4 py-2">Groupe</th>
+                <th className="border px-4 py-2">Paiement</th>
                 <th className="border px-4 py-2">Actions</th>
               </tr>
             </thead>
@@ -62,6 +78,24 @@ export default function UserManager() {
                   <td className="border px-4 py-2">{student.email}</td>
                   <td className="border px-4 py-2">{student.serie}</td>
                   <td className="border px-4 py-2">{student.status}</td>
+                  <td className="border px-4 py-2">
+                    <select
+                      value={student.group || ""}
+                      onChange={(e) => updateGroup(student.id, Number(e.target.value))}
+                      className="border px-2 py-1 rounded"
+                    >
+                      <option value="">Non assigné</option>
+                      <option value={1}>Groupe 1</option>
+                      <option value={2}>Groupe 2</option>
+                    </select>
+                  </td>
+                  <td className="border px-4 py-2">
+                    <input
+                      type="checkbox"
+                      checked={student.hasPaidThisMonth || false}
+                      onChange={() => togglePayment(student.id)}
+                    />
+                  </td>
                   <td className="border px-4 py-2 space-x-2">
                     {student.status === "pending" && (
                       <button

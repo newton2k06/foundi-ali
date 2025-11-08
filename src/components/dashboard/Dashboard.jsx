@@ -78,10 +78,10 @@ function Dashboard() {
             📅 Planning
           </button>
           <button 
-            onClick={() => navigate("/presences")}
+            onClick={() => navigate("/Paiement")}
             className="bg-orange-500 text-white p-3 rounded-lg text-center"
           >
-            ✅ Présences
+            ✅ Paiement
           </button>
         </div>
       </div>
@@ -128,7 +128,7 @@ function Dashboard() {
           className="p-2 text-center text-purple-600 text-lg"
         >📅</button>
         <button 
-          onClick={() => navigate("/presences")}
+          onClick={() => navigate("/Paiement")}
           className="p-2 text-center text-orange-600 text-lg"
         >✅</button>
       </div>

@@ -9,7 +9,7 @@ function SidebarEleve() {
     { name: "Mes Cours", path: "/dashboard/cours" },
     { name: "Mon Planning", path: "/dashboard/planning" },
     { name: "Mes Notes", path: "/dashboard/notes" },
-    { name: "Mes Présences", path: "/dashboard/presences" },
+    { name: "Mes Paiement", path: "/dashboard/Paiement" },
   ];
 
   return (
