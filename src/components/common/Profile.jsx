@@ -242,10 +242,8 @@ export default function Profile() {
                 >
                   <option value="">Sélectionnez une série</option>
                   <option value="A">Série A</option>
-                  <option value="B">Série B</option>
                   <option value="C">Série C</option>
                   <option value="D">Série D</option>
-                  <option value="E">Série E</option>
                 </select>
               </div>
             </div>

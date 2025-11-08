@@ -106,7 +106,10 @@ function LoginForm() {
         {/* Liens supplémentaires */}
         <p className="text-center text-gray-600 text-sm mt-4">
           Mot de passe oublié ?{" "}
-          <button className="text-blue-600 hover:underline">Réinitialiser</button>
+          <button 
+          onClick={() => navigate("/forgot-password")}
+          className="text-blue-600 hover:underline">Réinitialiser</button>
+          
         </p>
         <p className="text-center text-gray-600 text-sm mt-2">
           Pas de compte ?{" "}

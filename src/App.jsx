@@ -10,24 +10,13 @@ import PlanningPage from './components/eleve/PlanningPage'
 import CoursePage from './components/eleve/CoursePage'
 import Profile from './components/common/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
+// Dans votre App.jsx, ajoutez cette route
+import ForgotPassword from './components/layout/ForgotPassword';
 
-
-
-import { useEffect } from 'react';
-import { auth } from './firebase/config';
-import { onAuthStateChanged } from 'firebase/auth';
+// Dans votre composant Routes, ajoutez :
 
 function App() {
-  useEffect(() => {
-    console.log('🔄 App component mounted - testing Firebase...');
-    // Test Firebase
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      console.log('🔥 Firebase connecté !');
-      console.log('Utilisateur:', user);
-    });
-    
-    return () => unsubscribe();
-  }, []);
+  
   
   return (
     <Routes>
@@ -41,6 +30,7 @@ function App() {
       <Route path="/planning" element={<PlanningPage />} />
       <Route path="/Paiement" element={<PaiementPage />} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
 
     </Routes>
   )
