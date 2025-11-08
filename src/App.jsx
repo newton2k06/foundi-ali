@@ -4,6 +4,13 @@ import RegisterForm from './components/auth/RegisterForm'
 import LoginForm from './components/auth/LoginForm'
 import Dashboard from './components/dashboard/Dashboard'
 import DashboardSuperUser from './components/dashboard/DashboardSuperUser'
+import NotesPage from './components/eleve/NotesPage'
+import PresencesPage from './components/eleve/PresencesPage'
+import PlanningPage from './components/eleve/PlanningPage'
+import CoursePage from './components/eleve/CoursePage'
+
+
+
 
 import { useEffect } from 'react';
 import { auth } from './firebase/config';
@@ -28,7 +35,10 @@ function App() {
       <Route path="/RegisterForm" element={<RegisterForm />} />
       <Route path="/Dashboard" element={<Dashboard />} />
       <Route path="/admin" element={<DashboardSuperUser />} />
-      
+      <Route path="/cours" element={<CoursePage />} />
+      <Route path="/notes" element={<NotesPage />} />
+      <Route path="/planning" element={<PlanningPage />} />
+      <Route path="/presences" element={<PresencesPage />} />
 
 
     </Routes>
