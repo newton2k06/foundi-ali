@@ -10,7 +10,6 @@ import PlanningPage from './components/eleve/PlanningPage'
 import CoursePage from './components/eleve/CoursePage'
 import Profile from './components/common/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
-// Dans votre App.jsx, ajoutez cette route
 import ForgotPassword from './components/layout/ForgotPassword';
 
 // Dans votre composant Routes, ajoutez :
