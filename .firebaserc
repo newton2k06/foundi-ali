@@ -1,5 +1,15 @@
 {
   "projects": {
     "default": "foundi-ali"
-  }
+  },
+  "targets": {
+    "foundi-ali": {
+      "hosting": {
+        "prod": [
+          "foundi-ali"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

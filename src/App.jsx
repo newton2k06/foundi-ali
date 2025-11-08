@@ -8,7 +8,8 @@ import NotesPage from './components/eleve/NotesPage'
 import PaiementPage from './components/eleve/PaiementPage'
 import PlanningPage from './components/eleve/PlanningPage'
 import CoursePage from './components/eleve/CoursePage'
-
+import Profile from './components/common/Profile';
+import ProtectedRoute from './components/ProtectedRoute';
 
 
 
@@ -39,7 +40,7 @@ function App() {
       <Route path="/notes" element={<NotesPage />} />
       <Route path="/planning" element={<PlanningPage />} />
       <Route path="/Paiement" element={<PaiementPage />} />
-      
+      <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
     </Routes>
   )

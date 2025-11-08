@@ -1,4 +1,3 @@
-// DashboardSuperUser.jsx
 import { useEffect, useState } from "react";
 import { signOut } from "firebase/auth";
 import { auth } from "../../firebase/config";
@@ -8,6 +7,7 @@ import UserManager from "../admin/UserManager";
 import CourseManager from "../admin/CourseManager";
 import PlanningManager from "../admin/PlanningManager";
 import StatsManager from "../admin/StatsManager";
+import Profile from "../common/Profile"; 
 
 export default function DashboardSuperUser() {
   const navigate = useNavigate();
@@ -15,7 +15,6 @@ export default function DashboardSuperUser() {
   const [userLoaded, setUserLoaded] = useState(false);
 
   useEffect(() => {
-    // Vérification superuser
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (!user) {
         navigate("/LoginForm");
@@ -32,6 +31,24 @@ export default function DashboardSuperUser() {
   };
 
   if (!userLoaded) return <p className="text-center mt-10">Chargement utilisateur...</p>;
+
+  // Contenu conditionnel
+  const renderContent = () => {
+    switch (activePage) {
+      case "students":
+        return <UserManager />;
+      case "courses":
+        return <CourseManager />;
+      case "planning":
+        return <PlanningManager />;
+      case "stats":
+        return <StatsManager />;
+      case "profile": // ← Nouveau cas
+        return <Profile />;
+      default:
+        return <UserManager />;
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -76,6 +93,16 @@ export default function DashboardSuperUser() {
           >
             📊 Statistiques
           </button>
+
+          {/* NOUVEAU BOUTON PROFIL */}
+          <button
+            onClick={() => setActivePage("profile")}
+            className={`w-full text-left p-3 rounded-lg font-semibold ${
+              activePage === "profile" ? "bg-indigo-600 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
+          >
+            👤 Mon Profil
+          </button>
         </nav>
 
         <button
@@ -92,14 +119,12 @@ export default function DashboardSuperUser() {
         <button onClick={() => setActivePage("courses")}>📚</button>
         <button onClick={() => setActivePage("planning")}>📅</button>
         <button onClick={() => setActivePage("stats")}>📊</button>
+        <button onClick={() => setActivePage("profile")}>👤</button> {/* ← Nouveau bouton */}
       </div>
 
       {/* CONTENT */}
       <main className="flex-1 p-4 md:p-8">
-        {activePage === "students" && <UserManager />}
-        {activePage === "courses" && <CourseManager />}
-        {activePage === "planning" && <PlanningManager />}
-        {activePage === "stats" && <StatsManager />}
+        {renderContent()}
       </main>
     </div>
   );
