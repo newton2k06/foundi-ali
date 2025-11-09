@@ -2,17 +2,33 @@ import { useEffect, useState } from "react";
 import { signOut } from "firebase/auth";
 import { auth } from "../../firebase/config";
 import { useNavigate } from "react-router-dom";
-
+import { verifyAuth } from "../../utils/authGuard";
 import UserManager from "../admin/UserManager";
 import CourseManager from "../admin/CourseManager";
 import PlanningManager from "../admin/PlanningManager";
 import StatsManager from "../admin/StatsManager";
 import Profile from "../common/Profile"; 
 
+
 export default function DashboardSuperUser() {
   const navigate = useNavigate();
   const [activePage, setActivePage] = useState("students");
   const [userLoaded, setUserLoaded] = useState(false);
+  
+  useEffect(() => {
+    const checkAuthorization = async () => {
+      const result = await verifyAuth("superuser"); // ← UNE SEULE LIGNE !
+      
+      if (!result.authorized) {
+        navigate(result.redirectTo);
+        return;
+      }
+      
+      setUserLoaded(true);
+    };
+
+    checkAuthorization();
+  }, [navigate]);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -25,10 +41,27 @@ export default function DashboardSuperUser() {
     return () => unsubscribe();
   }, [navigate]);
 
-  const handleLogout = async () => {
+ const handleLogout = async () => {
+  try {
     await signOut(auth);
-    navigate("/LoginForm");
-  };
+    
+    // Attendre un peu que la déconnexion soit effective
+    setTimeout(() => {
+      // Double vérification
+      if (!auth.currentUser) {
+        navigate("/", { replace: true });
+      } else {
+        // Fallback si la déconnexion échoue
+        window.location.href = "/";
+      }
+    }, 500);
+    
+  } catch (error) {
+    console.error("Erreur déconnexion:", error);
+    // Fallback en cas d'erreur
+    window.location.href = "/";
+  }
+};
 
   if (!userLoaded) return <p className="text-center mt-10">Chargement utilisateur...</p>;
 

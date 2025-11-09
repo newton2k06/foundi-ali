@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import CourseList from "../eleve/CourseList";
 import Profile from "../common/Profile";
 import PlanningPage from "../eleve/PlanningPage"; 
+import { verifyAuth } from "../../utils/authGuard";
 
 const NAVIGATION_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: "🏠", color: "blue" },
@@ -22,6 +23,28 @@ function Dashboard() {
   const [activePage, setActivePage] = useState("dashboard");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  useEffect(() => {
+    const checkAuthorization = async () => {
+      const result = await verifyAuth(); // ← Pour tout utilisateur connecté
+      
+      if (!result.authorized) {
+        navigate(result.redirectTo);
+        return;
+      }
+      
+      // Si c'est un superuser qui tente d'accéder au dashboard élève
+      if (result.userData.role === "superuser") {
+        navigate("/admin");
+        return;
+      }
+      
+      setUser(auth.currentUser);
+      setUserProfile(result.userData);
+      setLoading(false);
+    };
+
+    checkAuthorization();
+  }, [navigate]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -52,13 +75,26 @@ function Dashboard() {
   }, [navigate]);
 
   const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      navigate("/LoginForm");
-    } catch (error) {
-      console.error("Erreur déconnexion:", error);
-    }
-  };
+  try {
+    await signOut(auth);
+    
+    // Attendre un peu que la déconnexion soit effective
+    setTimeout(() => {
+      // Double vérification
+      if (!auth.currentUser) {
+        navigate("/", { replace: true });
+      } else {
+        // Fallback si la déconnexion échoue
+        window.location.href = "/";
+      }
+    }, 500);
+    
+  } catch (error) {
+    console.error("Erreur déconnexion:", error);
+    // Fallback en cas d'erreur
+    window.location.href = "/";
+  }
+};
 
   const handleNavigation = (item) => {
     if (item.external) {
