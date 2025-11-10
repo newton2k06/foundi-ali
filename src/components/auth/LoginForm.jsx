@@ -1,15 +1,37 @@
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { useState, useEffect } from "react";
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "../../firebase/config";
 import { doc, getDoc } from "firebase/firestore";
 
 function LoginForm() {
   const navigate = useNavigate();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  // 🔥 EMPÊCHER L'ACCÈS SI DÉJÀ CONNECTÉ
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // Utilisateur déjà connecté, vérifier son rôle
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          
+          if (userData.role === "superuser") {
+            navigate("/admin", { replace: true });
+          } else {
+            navigate("/dashboard", { replace: true });
+          }
+        }
+      }
+      setCheckingAuth(false);
+    });
+
+    return () => unsubscribe();
+  }, [navigate]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -25,19 +47,17 @@ function LoginForm() {
       if (userDoc.exists()) {
         const userData = userDoc.data();
 
-        if (userData.status === "active" ) {
-          // ✅ Compte validé
-          if(userData.role==="superuser"){
-            navigate("/admin")
-          }else{
-            navigate("/dashboard");
-
+        if (userData.status === "active") {
+          // ✅ Compte validé - VÉRIFICATION DU RÔLE D'ABORD
+          if (userData.role === "superuser") {
+            navigate("/admin", { replace: true });
+          } else {
+            navigate("/dashboard", { replace: true });
           }
-          
         } else {
           // ❌ Compte en attente
           setError("Votre compte est en attente de validation par l'administrateur.");
-          await signOut(auth); // Déconnexion immédiate
+          await signOut(auth);
         }
       } else {
         setError("Profil utilisateur introuvable. Contactez l'administrateur.");
@@ -56,6 +76,18 @@ function LoginForm() {
       }
     }
   };
+
+  // 🔥 Afficher un loading pendant la vérification
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Vérification de la session...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-md mx-auto mt-12 p-8 bg-white rounded-2xl shadow-lg">
