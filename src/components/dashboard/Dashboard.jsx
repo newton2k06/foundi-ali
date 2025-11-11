@@ -16,7 +16,7 @@ const NAVIGATION_ITEMS = [
   { id: "profile", label: "Mon Profil", icon: "👤", color: "green" },
   { id: "planning", label: "Planning", icon: "📅", color: "orange" },
   { id: "chat-global", label: "Chat Global", icon: "💬", color: "indigo" },
-  { id: "messages", label: "Messages", icon: "📨", color: "teal" }
+  
 ];
 
 function Dashboard() {
@@ -160,7 +160,7 @@ function Dashboard() {
             </div>
           </div>
         );
-
+    {/*
       case "messages":
         return (
           <div className="space-y-6">
@@ -175,7 +175,7 @@ function Dashboard() {
               <MessageriePrivee />
             </div>
           </div>
-        );
+        );*/}
       
       case "dashboard":
       default:
@@ -227,7 +227,7 @@ function Dashboard() {
                 color="indigo"
                 onClick={() => setActivePage("chat-global")}
               />
-
+                      {/*
               <FeatureCard
                 title="Messages"
                 description="Contactez votre professeur"
@@ -235,7 +235,7 @@ function Dashboard() {
                 color="teal"
                 onClick={() => setActivePage("messages")}
               />
-
+                      */}
               <FeatureCard
                 title="Paiement"
                 description="Gestion des frais de scolarité"

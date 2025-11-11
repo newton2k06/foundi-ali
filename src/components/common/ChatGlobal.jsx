@@ -1,9 +1,127 @@
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { 
   collection, addDoc, onSnapshot, query, orderBy, 
   serverTimestamp, limit, updateDoc, deleteDoc, doc 
 } from "firebase/firestore";
 import { db, auth } from "../../firebase/config";
+
+// Composant MessageBubble séparé avec React.memo
+const MessageBubble = React.memo(({ 
+  message, 
+  isEditing, 
+  editText, 
+  onStartEdit, 
+  onDelete, 
+  onSaveEdit, 
+  onCancelEdit, 
+  onEditTextChange, 
+  onEditKeyDown 
+}) => {
+  const isOwnMessage = message.userId === auth.currentUser?.uid;
+  const textareaRef = useRef(null);
+
+  // Focus automatique quand on entre en mode édition
+  useEffect(() => {
+    if (isEditing && textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.setSelectionRange(
+        textareaRef.current.value.length,
+        textareaRef.current.value.length
+      );
+    }
+  }, [isEditing]);
+
+  return (
+    <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
+      <div className={`max-w-xs px-4 py-2 rounded-lg relative group ${
+        isOwnMessage 
+          ? 'bg-blue-500 text-white' 
+          : 'bg-gray-100 text-gray-800'
+      }`}>
+        
+        {/* En-tête du message */}
+        <div className="flex justify-between items-start mb-1">
+          <p className="text-sm font-semibold">
+            {isOwnMessage ? '👤 Moi' : message.userName}
+          </p>
+          
+          {/* Menu d'actions (uniquement pour ses propres messages) */}
+          {isOwnMessage && !isEditing && (
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+              <div className="flex gap-1">
+                <button 
+                  onClick={() => onStartEdit(message)}
+                  className="text-xs bg-white text-blue-600 px-2 py-1 rounded hover:bg-blue-50"
+                  title="Modifier"
+                >
+                  ✏️
+                </button>
+                <button 
+                  onClick={() => onDelete(message.id)}
+                  className="text-xs bg-white text-red-600 px-2 py-1 rounded hover:bg-red-50"
+                  title="Supprimer"
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Contenu du message (édition ou affichage) */}
+        {isEditing ? (
+          <div className="space-y-2">
+            <textarea
+              ref={textareaRef}
+              value={editText}
+              onChange={(e) => onEditTextChange(e.target.value)}
+              onKeyDown={(e) => onEditKeyDown(e, message.id)}
+              className="w-full p-2 border rounded text-gray-800 text-sm resize-none"
+              rows={Math.min(Math.max(editText.split('\n').length, 2), 6)}
+              maxLength={500}
+              placeholder="Modifiez votre message..."
+            />
+            <div className="flex gap-2 justify-end items-center">
+              <span className="text-xs text-gray-500 flex-1">
+                {editText.length}/500
+              </span>
+              <button 
+                onClick={onCancelEdit}
+                className="text-xs bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600"
+              >
+                Annuler
+              </button>
+              <button 
+                onClick={() => onSaveEdit(message.id)}
+                disabled={!editText.trim()}
+                className="text-xs bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 disabled:opacity-50"
+              >
+                Sauvegarder
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <p className="mt-1 whitespace-pre-wrap break-words">{message.text}</p>
+            
+            {/* Pied du message avec horodatage et indication de modification */}
+            <div className="flex justify-between items-center mt-2">
+              <p className="text-xs opacity-70">
+                {message.createdAt?.toDate?.().toLocaleTimeString('fr-FR', { 
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                }) || '...'}
+              </p>
+              {message.isEdited && (
+                <p className="text-xs opacity-70 italic ml-2">modifié</p>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+});
 
 export default function ChatGlobal() {
   const [messages, setMessages] = useState([]);
@@ -12,17 +130,17 @@ export default function ChatGlobal() {
   const [editingMessage, setEditingMessage] = useState(null);
   const [editText, setEditText] = useState("");
   const unsubscribeRef = useRef(null);
+  const messagesEndRef = useRef(null);
 
   useEffect(() => {
     const loadMessages = async () => {
       try {
         const q = query(
           collection(db, "messages_global"), 
-          orderBy("createdAt", "desc"),
+          orderBy("createdAt", "asc"),
           limit(100)
         );
         
-        // Nettoyer l'ancien listener
         if (unsubscribeRef.current) {
           unsubscribeRef.current();
         }
@@ -33,7 +151,7 @@ export default function ChatGlobal() {
               id: doc.id,
               ...doc.data()
             }));
-            setMessages(messagesData.reverse());
+            setMessages(messagesData);
             setLoading(false);
           },
           (error) => {
@@ -50,13 +168,17 @@ export default function ChatGlobal() {
 
     loadMessages();
 
-    // Cleanup
     return () => {
       if (unsubscribeRef.current) {
         unsubscribeRef.current();
       }
     };
   }, []);
+
+  // Scroll automatique vers le bas quand nouveaux messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const sendMessage = async (e) => {
     e.preventDefault();
@@ -127,95 +249,15 @@ export default function ChatGlobal() {
     }
   };
 
-  // Composant d'affichage d'un message
-  const MessageBubble = ({ message }) => {
-    const isOwnMessage = message.userId === auth.currentUser?.uid;
-    const isEditing = editingMessage === message.id;
-
-    return (
-      <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
-        <div className={`max-w-xs px-4 py-2 rounded-lg relative group ${
-          isOwnMessage 
-            ? 'bg-blue-500 text-white' 
-            : 'bg-gray-100 text-gray-800'
-        }`}>
-          
-          {/* En-tête du message */}
-          <div className="flex justify-between items-start mb-1">
-            <p className="text-sm font-semibold">
-              {isOwnMessage ? '👤 Moi' : message.userName}
-            </p>
-            
-            {/* Menu d'actions (uniquement pour ses propres messages) */}
-            {isOwnMessage && (
-              <div className="opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                <div className="flex gap-1">
-                  <button 
-                    onClick={() => startEditMessage(message)}
-                    className="text-xs bg-white text-blue-600 px-2 py-1 rounded hover:bg-blue-50"
-                    title="Modifier"
-                  >
-                    ✏️
-                  </button>
-                  <button 
-                    onClick={() => deleteMessage(message.id)}
-                    className="text-xs bg-white text-red-600 px-2 py-1 rounded hover:bg-red-50"
-                    title="Supprimer"
-                  >
-                    🗑️
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Contenu du message (édition ou affichage) */}
-          {isEditing ? (
-            <div className="space-y-2">
-              <textarea
-                value={editText}
-                onChange={(e) => setEditText(e.target.value)}
-                className="w-full p-2 border rounded text-gray-800 text-sm"
-                rows="3"
-                maxLength={500}
-                autoFocus
-              />
-              <div className="flex gap-2 justify-end">
-                <button 
-                  onClick={cancelEdit}
-                  className="text-xs bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600"
-                >
-                  Annuler
-                </button>
-                <button 
-                  onClick={() => saveEdit(message.id)}
-                  className="text-xs bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
-                >
-                  Sauvegarder
-                </button>
-              </div>
-            </div>
-          ) : (
-            <>
-              <p className="mt-1 whitespace-pre-wrap">{message.text}</p>
-              
-              {/* Pied du message avec horodatage et indication de modification */}
-              <div className="flex justify-between items-center mt-2">
-                <p className="text-xs opacity-70">
-                  {message.createdAt?.toDate?.().toLocaleTimeString('fr-FR', { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                  }) || '...'}
-                </p>
-                {message.isEdited && (
-                  <p className="text-xs opacity-70 italic ml-2">modifié</p>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-    );
+  // Gérer la touche Entrée dans le textarea d'édition
+  const handleEditKeyDown = (e, messageId) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      saveEdit(messageId);
+    }
+    if (e.key === 'Escape') {
+      cancelEdit();
+    }
   };
 
   if (loading) {
@@ -244,9 +286,23 @@ export default function ChatGlobal() {
         {messages.length === 0 ? (
           <p className="text-center text-gray-500 py-8">Aucun message. Soyez le premier à écrire !</p>
         ) : (
-          messages.map((message) => (
-            <MessageBubble key={message.id} message={message} />
-          ))
+          <>
+            {messages.map((message) => (
+              <MessageBubble 
+                key={message.id} 
+                message={message}
+                isEditing={editingMessage === message.id}
+                editText={editText}
+                onStartEdit={startEditMessage}
+                onDelete={deleteMessage}
+                onSaveEdit={saveEdit}
+                onCancelEdit={cancelEdit}
+                onEditTextChange={setEditText}
+                onEditKeyDown={handleEditKeyDown}
+              />
+            ))}
+            <div ref={messagesEndRef} />
+          </>
         )}
       </div>
 

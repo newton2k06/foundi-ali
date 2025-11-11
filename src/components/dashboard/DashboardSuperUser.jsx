@@ -94,7 +94,6 @@ export default function DashboardSuperUser() {
     { id: "planning", label: "Planning", icon: "📅", color: "green" },
     { id: "stats", label: "Statistiques", icon: "📊", color: "yellow" },
     { id: "chat-global", label: "Chat Global", icon: "💬", color: "indigo" },
-    { id: "messages-prives", label: "Messages Privés", icon: "📨", color: "teal" },
     { id: "monitoring", label: "Monitoring", icon: "📈", color: "orange" },
     { id: "profile", label: "Mon Profil", icon: "👤", color: "gray" },
   ];
