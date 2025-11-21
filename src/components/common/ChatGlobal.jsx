@@ -4,118 +4,99 @@ import {
   serverTimestamp, limit, updateDoc, deleteDoc, doc 
 } from "firebase/firestore";
 import { db, auth } from "../../firebase/config";
+import Linkify from "../common/Linkify"; 
 
-// Composant MessageBubble séparé avec React.memo
-const MessageBubble = React.memo(({ 
-  message, 
-  isEditing, 
-  editText, 
-  onStartEdit, 
-  onDelete, 
-  onSaveEdit, 
-  onCancelEdit, 
-  onEditTextChange, 
-  onEditKeyDown 
+// ----------------- MESSAGE BUBBLE -----------------
+const MessageBubble = React.memo(({
+  message,
+  isEditing,
+  editText,
+  onStartEdit,
+  onDelete,
+  onSaveEdit,
+  onCancelEdit,
+  onEditTextChange,
+  onEditKeyDown,
 }) => {
-  const isOwnMessage = message.userId === auth.currentUser?.uid;
+  const isOwn = message.userId === auth.currentUser?.uid;
   const textareaRef = useRef(null);
 
-  // Focus automatique quand on entre en mode édition
   useEffect(() => {
     if (isEditing && textareaRef.current) {
       textareaRef.current.focus();
-      textareaRef.current.setSelectionRange(
-        textareaRef.current.value.length,
-        textareaRef.current.value.length
-      );
     }
   }, [isEditing]);
 
   return (
-    <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
-      <div className={`max-w-xs px-4 py-2 rounded-lg relative group ${
-        isOwnMessage 
-          ? 'bg-blue-500 text-white' 
-          : 'bg-gray-100 text-gray-800'
-      }`}>
-        
-        {/* En-tête du message */}
-        <div className="flex justify-between items-start mb-1">
-          <p className="text-sm font-semibold">
-            {isOwnMessage ? '👤 Moi' : message.userName}
+    <div className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
+      <div
+        className={`max-w-md px-4 py-3 rounded-2xl shadow-sm break-words ${
+          isOwn ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-800"
+        }`}
+      >
+        {/* header */}
+        <div className="flex justify-between mb-1">
+          <p className="text-sm font-bold">
+            {isOwn ? "Moi" : message.userName}
           </p>
-          
-          {/* Menu d'actions (uniquement pour ses propres messages) */}
-          {isOwnMessage && !isEditing && (
-            <div className="opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-              <div className="flex gap-1">
-                <button 
-                  onClick={() => onStartEdit(message)}
-                  className="text-xs bg-white text-blue-600 px-2 py-1 rounded hover:bg-blue-50"
-                  title="Modifier"
-                >
-                  ✏️
-                </button>
-                <button 
-                  onClick={() => onDelete(message.id)}
-                  className="text-xs bg-white text-red-600 px-2 py-1 rounded hover:bg-red-50"
-                  title="Supprimer"
-                >
-                  🗑️
-                </button>
-              </div>
+
+          {/* actions */}
+          {isOwn && !isEditing && (
+            <div className="flex gap-2 opacity-70">
+              <button
+                onClick={() => onStartEdit(message)}
+                className="text-xs hover:opacity-100"
+              >
+                ✏️
+              </button>
+              <button
+                onClick={() => onDelete(message.id)}
+                className="text-xs hover:opacity-100"
+              >
+                🗑️
+              </button>
             </div>
           )}
         </div>
 
-        {/* Contenu du message (édition ou affichage) */}
+        {/* content */}
         {isEditing ? (
-          <div className="space-y-2">
+          <>
             <textarea
               ref={textareaRef}
               value={editText}
               onChange={(e) => onEditTextChange(e.target.value)}
               onKeyDown={(e) => onEditKeyDown(e, message.id)}
-              className="w-full p-2 border rounded text-gray-800 text-sm resize-none"
-              rows={Math.min(Math.max(editText.split('\n').length, 2), 6)}
-              maxLength={500}
-              placeholder="Modifiez votre message..."
+              className="w-full p-2 rounded border text-black text-sm resize-none"
+              rows={3}
             />
-            <div className="flex gap-2 justify-end items-center">
-              <span className="text-xs text-gray-500 flex-1">
-                {editText.length}/500
-              </span>
-              <button 
+            <div className="flex justify-end gap-2 mt-2">
+              <button
                 onClick={onCancelEdit}
-                className="text-xs bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600"
+                className="text-xs bg-gray-400 px-2 py-1 rounded text-white"
               >
                 Annuler
               </button>
-              <button 
+              <button
                 onClick={() => onSaveEdit(message.id)}
-                disabled={!editText.trim()}
-                className="text-xs bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 disabled:opacity-50"
+                className="text-xs bg-green-500 px-2 py-1 rounded text-white"
               >
                 Sauvegarder
               </button>
             </div>
-          </div>
+          </>
         ) : (
           <>
-            <p className="mt-1 whitespace-pre-wrap break-words">{message.text}</p>
-            
-            {/* Pied du message avec horodatage et indication de modification */}
-            <div className="flex justify-between items-center mt-2">
-              <p className="text-xs opacity-70">
-                {message.createdAt?.toDate?.().toLocaleTimeString('fr-FR', { 
-                  hour: '2-digit', 
-                  minute: '2-digit' 
-                }) || '...'}
-              </p>
-              {message.isEdited && (
-                <p className="text-xs opacity-70 italic ml-2">modifié</p>
-              )}
-            </div>
+            <p className="text-base leading-relaxed whitespace-pre-wrap">
+              <Linkify text={message.text} />
+            </p>
+            <p className="text-xs opacity-70 mt-1">
+              {message.createdAt?.toDate?.().toLocaleTimeString("fr-FR", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+              {message.isEdited && " · modifié"}
+            </p>
           </>
         )}
       </div>
@@ -123,208 +104,117 @@ const MessageBubble = React.memo(({
   );
 });
 
+// ------------------ CHAT GLOBAL -------------------
 export default function ChatGlobal() {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
-  const [loading, setLoading] = useState(true);
   const [editingMessage, setEditingMessage] = useState(null);
   const [editText, setEditText] = useState("");
-  const unsubscribeRef = useRef(null);
   const messagesEndRef = useRef(null);
 
+  // load messages
   useEffect(() => {
-    const loadMessages = async () => {
-      try {
-        const q = query(
-          collection(db, "messages_global"), 
-          orderBy("createdAt", "asc"),
-          limit(100)
-        );
-        
-        if (unsubscribeRef.current) {
-          unsubscribeRef.current();
-        }
+    const q = query(
+      collection(db, "messages_global"),
+      orderBy("createdAt", "asc"),
+      limit(200)
+    );
 
-        unsubscribeRef.current = onSnapshot(q, 
-          (snapshot) => {
-            const messagesData = snapshot.docs.map(doc => ({
-              id: doc.id,
-              ...doc.data()
-            }));
-            setMessages(messagesData);
-            setLoading(false);
-          },
-          (error) => {
-            console.error("Erreur Firestore:", error);
-            setLoading(false);
-          }
-        );
+    const unsub = onSnapshot(q, (snapshot) => {
+      setMessages(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
+    });
 
-      } catch (error) {
-        console.error("Erreur initialisation chat:", error);
-        setLoading(false);
-      }
-    };
-
-    loadMessages();
-
-    return () => {
-      if (unsubscribeRef.current) {
-        unsubscribeRef.current();
-      }
-    };
+    return () => unsub();
   }, []);
 
-  // Scroll automatique vers le bas quand nouveaux messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // send
   const sendMessage = async (e) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
-    const user = auth.currentUser;
-    if (!user) return;
+    const u = auth.currentUser;
+    if (!u) return;
 
-    try {
-      await addDoc(collection(db, "messages_global"), {
-        text: newMessage.trim(),
-        userId: user.uid,
-        userEmail: user.email,
-        userName: user.displayName || user.email.split('@')[0],
-        userRole: "user",
-        type: "global",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        isEdited: false
-      });
-      setNewMessage("");
-    } catch (error) {
-      console.error("Erreur envoi message:", error);
-      alert("Erreur lors de l'envoi du message");
-    }
+    await addDoc(collection(db, "messages_global"), {
+      text: newMessage.trim(),
+      userId: u.uid,
+      userName: u.displayName || u.email.split("@")[0],
+      createdAt: serverTimestamp(),
+      isEdited: false,
+    });
+
+    setNewMessage("");
   };
 
-  // MODIFIER un message
-  const startEditMessage = (message) => {
-    if (message.userId === auth.currentUser?.uid) {
-      setEditingMessage(message.id);
-      setEditText(message.text);
-    }
+  // editing
+  const startEdit = (m) => {
+    setEditingMessage(m.id);
+    setEditText(m.text);
   };
 
-  const cancelEdit = () => {
+  const saveEdit = async (id) => {
+    await updateDoc(doc(db, "messages_global", id), {
+      text: editText.trim(),
+      isEdited: true,
+      updatedAt: serverTimestamp(),
+    });
     setEditingMessage(null);
-    setEditText("");
   };
 
-  const saveEdit = async (messageId) => {
-    if (!editText.trim()) return;
-
-    try {
-      const messageRef = doc(db, "messages_global", messageId);
-      await updateDoc(messageRef, {
-        text: editText.trim(),
-        updatedAt: serverTimestamp(),
-        isEdited: true
-      });
-      setEditingMessage(null);
-      setEditText("");
-    } catch (error) {
-      console.error("Erreur modification message:", error);
-      alert("Erreur lors de la modification du message");
+  const deleteMsg = async (id) => {
+    if (window.confirm("Supprimer ce message ?")) {
+      await deleteDoc(doc(db, "messages_global", id));
     }
   };
-
-  // SUPPRIMER un message
-  const deleteMessage = async (messageId) => {
-    if (window.confirm("Voulez-vous vraiment supprimer ce message ?")) {
-      try {
-        await deleteDoc(doc(db, "messages_global", messageId));
-      } catch (error) {
-        console.error("Erreur suppression message:", error);
-        alert("Erreur lors de la suppression du message");
-      }
-    }
-  };
-
-  // Gérer la touche Entrée dans le textarea d'édition
-  const handleEditKeyDown = (e, messageId) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      saveEdit(messageId);
-    }
-    if (e.key === 'Escape') {
-      cancelEdit();
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="bg-white rounded-xl shadow-sm h-[500px] flex items-center justify-center">
-        <p className="text-gray-600">Chargement des messages...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="bg-white rounded-xl shadow-sm h-[500px] flex flex-col">
-      {/* Header */}
-      <div className="p-4 border-b bg-blue-50">
-        <h2 className="text-xl font-semibold">📢 Chat Global</h2>
-        <p className="text-sm text-gray-600">
-          Discussions générales de la classe
-          <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-            ✏️ Survolez vos messages pour les modifier
-          </span>
-        </p>
-      </div>
+      
+      
 
-      {/* Messages */}
+
+      {/* messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {messages.length === 0 ? (
-          <p className="text-center text-gray-500 py-8">Aucun message. Soyez le premier à écrire !</p>
-        ) : (
-          <>
-            {messages.map((message) => (
-              <MessageBubble 
-                key={message.id} 
-                message={message}
-                isEditing={editingMessage === message.id}
-                editText={editText}
-                onStartEdit={startEditMessage}
-                onDelete={deleteMessage}
-                onSaveEdit={saveEdit}
-                onCancelEdit={cancelEdit}
-                onEditTextChange={setEditText}
-                onEditKeyDown={handleEditKeyDown}
-              />
-            ))}
-            <div ref={messagesEndRef} />
-          </>
-        )}
+        {messages.map((m) => (
+          <MessageBubble
+            key={m.id}
+            message={m}
+            isEditing={editingMessage === m.id}
+            editText={editText}
+            onStartEdit={startEdit}
+            onDelete={deleteMsg}
+            onSaveEdit={saveEdit}
+            onCancelEdit={() => setEditingMessage(null)}
+            onEditTextChange={setEditText}
+            onEditKeyDown={(e, id) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                saveEdit(id);
+              }
+            }}
+          />
+        ))}
+        <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
-      <form onSubmit={sendMessage} className="p-4 border-t">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Votre message pour toute la classe..."
-            className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            maxLength={500}
-          />
-          <button 
-            type="submit"
-            disabled={!newMessage.trim()}
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Envoyer
-          </button>
-        </div>
+      {/* input */}
+      <form onSubmit={sendMessage} className="p-4 border-t flex gap-2">
+        <input
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          placeholder="Votre message..."
+          className="flex-1 px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500"
+        />
+        <button
+          disabled={!newMessage.trim()}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50"
+        >
+          Envoyer
+        </button>
       </form>
     </div>
   );

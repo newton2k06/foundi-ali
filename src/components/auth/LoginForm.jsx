@@ -13,25 +13,12 @@ function LoginForm() {
 
   // 🔥 EMPÊCHER L'ACCÈS SI DÉJÀ CONNECTÉ
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        // Utilisateur déjà connecté, vérifier son rôle
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          
-          if (userData.role === "superuser") {
-            navigate("/admin", { replace: true });
-          } else {
-            navigate("/dashboard", { replace: true });
-          }
-        }
-      }
-      setCheckingAuth(false);
-    });
+  const unsubscribe = onAuthStateChanged(auth, () => {
+    setCheckingAuth(false);
+  });
 
-    return () => unsubscribe();
-  }, [navigate]);
+  return () => unsubscribe();
+}, []);
 
   const handleSubmit = async (event) => {
     event.preventDefault();

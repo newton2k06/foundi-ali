@@ -8,7 +8,6 @@ import Profile from "../common/Profile";
 import PlanningPage from "../eleve/PlanningPage"; 
 import { verifyAuth } from "../../utils/authGuard";
 import ChatGlobal from "../common/ChatGlobal";
-import MessageriePrivee from "../common/MessageriePrivee";
 
 const NAVIGATION_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: "🏠", color: "blue" },
@@ -21,7 +20,7 @@ const NAVIGATION_ITEMS = [
 
 function Dashboard() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(null); 
   const [userProfile, setUserProfile] = useState(null);
   const [activePage, setActivePage] = useState("dashboard");
   const [loading, setLoading] = useState(true);
@@ -148,17 +147,9 @@ function Dashboard() {
       case "chat-global":
         return (
           <div className="space-y-6">
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-              <div className="flex items-center space-x-3 mb-6">
-                <span className="text-2xl">💬</span>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Chat Global</h1>
-                  <p className="text-gray-600">Discutez avec toute la classe</p>
-                </div>
-              </div>
-              <ChatGlobal />
-            </div>
+             <ChatGlobal />
           </div>
+          
         );
     {/*
       case "messages":

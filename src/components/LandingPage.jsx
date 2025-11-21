@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase/config";
+import PapaPhoto from "../contexts/papa.jpg";
 
 function LandingPage() {
   const navigate = useNavigate();
@@ -81,12 +82,7 @@ function LandingPage() {
                   </div>
                   <span className="text-gray-700">Cours et ressources accessibles 24h/24</span>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <div className="bg-purple-100 p-2 rounded-lg">
-                    <span className="text-purple-600">💳</span>
-                  </div>
-                  <span className="text-gray-700">Gestion simplifiée des paiements</span>
-                </div>
+                
               </div>
 
               {/* Statistiques */}
@@ -113,16 +109,23 @@ function LandingPage() {
               
               {/* Avatar et présentation */}
               <div className="text-center mb-8">
-                <div className="bg-gradient-to-br from-blue-400 to-purple-500 w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center shadow-lg">
-                  <span className="text-white text-3xl">👨‍🏫</span>
+                <div className="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden shadow-lg border-4 border-white">
+                  <img
+                    src={PapaPhoto}  // ou import PapaPhoto from "../assets/papa.jpg"
+                    alt="Mr Ali M'kouboi"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
+
                 <h3 className="text-2xl font-bold text-gray-800">Mr Ali M'kouboi</h3>
                 <p className="text-gray-600 mt-2">Professeur de Mathématiques, Physique & Chimie</p>
+
                 <div className="flex justify-center space-x-4 mt-4">
                   <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">Expert BAC</span>
                   <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">Pédagogue</span>
                 </div>
               </div>
+
 
               {/* Boutons d'action */}
               <div className="space-y-4">
